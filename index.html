@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ミッションスロット</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --tds-teal: #00B4C8;
+    --tds-orange: #F5A623;
+    --tds-warm: #F5F0E8;
+    --tds-brown: #8B6914;
+    --tds-dark: #3A2A0A;
+    --slot-h: 90px;
+    --item-h: 90px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--tds-warm);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 40px;
+  }
+
+  /* ── ヘッダー ── */
+  .header {
+    width: 100%;
+    display: flex;
+    align-items: stretch;
+    min-height: 72px;
+  }
+  .header-logo {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    gap: 14px;
+  }
+  .header-logo.sea { background: var(--tds-teal); }
+  .header-logo.land { background: #E8732A; }
+
+  .header-logo .logo-text {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .header-logo .logo-text span {
+    display: block;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+  }
+
+  /* シー/ランド 切替ボタン */
+  .toggle-btn {
+    margin-left: auto;
+    background: rgba(255,255,255,0.25);
+    border: 2px solid rgba(255,255,255,0.7);
+    border-radius: 20px;
+    color: #fff;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-btn:hover { background: rgba(255,255,255,0.38); }
+
+  /* ── スロット本体 ── */
+  .slots-wrap {
+    width: 92%;
+    max-width: 420px;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .slot-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.10);
+    overflow: hidden;
+    height: var(--slot-h);
+    display: flex;
+    align-items: center;
+    padding-left: 16px;
+    gap: 14px;
+    position: relative;
+  }
+
+  .slot-icon {
+    width: 44px;
+    height: 44px;
+    border: 2.5px solid var(--tds-brown);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 22px;
+    color: var(--tds-brown);
+    background: var(--tds-warm);
+  }
+
+  .slot-window {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* リールはabsoluteで縦中央揃え */
+  .slot-reel {
+    position: absolute;
+    left: 0; right: 0;
+    display: flex;
+    flex-direction: column;
+    transition: none;
+    will-change: transform;
+  }
+
+  .slot-item {
+    height: var(--item-h);
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--tds-dark);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    padding-right: 12px;
+  }
+
+  /* 止まったときのハイライト */
+  .slot-card.stopped .slot-item.active {
+    color: var(--tds-teal);
+  }
+
+  /* スピン中の上下ブラー効果 */
+  .slot-card.spinning .slot-window::before,
+  .slot-card.spinning .slot-window::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 28px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .slot-card.spinning .slot-window::before {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.95), transparent);
+  }
+  .slot-card.spinning .slot-window::after {
+    bottom: 0;
+    background: linear-gradient(to top, rgba(255,255,255,0.95), transparent);
+  }
+
+  /* ── ボタン ── */
+  .btn-area {
+    width: 92%;
+    max-width: 420px;
+    margin-top: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-main {
+    width: 100%;
+    height: 58px;
+    border: none;
+    border-radius: 100px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+    background: var(--tds-orange);
+    color: #fff;
+    box-shadow: 0 5px 0 #c47c00, 0 8px 20px rgba(245,166,35,0.35);
+  }
+  .btn-main:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #c47c00, 0 4px 10px rgba(245,166,35,0.25);
+  }
+  .btn-main:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-reset {
+    background: #b0b8c1;
+    color: #fff;
+    border: none;
+    border-radius: 100px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 10px 36px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #8a9099;
+    transition: transform 0.12s;
+  }
+  .btn-reset:active { transform: translateY(2px); }
+
+  /* 紙吹雪 */
+  .confetti-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 100;
+    overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute;
+    top: -20px;
+    width: 10px; height: 14px;
+    border-radius: 2px;
+    opacity: 0;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    0%   { opacity: 1; transform: translateY(0) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(110vh) rotate(720deg); }
+  }
+
+  .label-row {
+    width: 92%;
+    max-width: 420px;
+    display: flex;
+    justify-content: center;
+    margin-top: 6px;
+  }
+  .slot-label {
+    font-size: 11px;
+    color: var(--tds-brown);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    opacity: 0.7;
+  }
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <div class="header-logo sea" id="header-logo">
+    <div class="logo-text">
+      <span id="logo-name">TOKYO DISNEY SEA.</span>
+      <span id="logo-jp" style="font-size:12px;font-weight:700;">東京ディズニーシー</span>
+    </div>
+    <button class="toggle-btn" id="toggle-park-btn">ランドに切替</button>
+  </div>
+</div>
+
+<!-- スロット -->
+<div class="slots-wrap">
+  <div class="slot-card" id="card-0">
+    <div class="slot-icon">🕐</div>
+    <div class="slot-window">
+      <div class="slot-reel" id="reel-0"></div>
+    </div>
+  </div>
+  <div class="slot-card" id="card-1">
+    <div class="slot-icon">👤</div>
+    <div class="slot-window">
+      <div class="slot-reel" id="reel-1"></div>
+    </div>
+  </div>
+  <div class="slot-card" id="card-2">
+    <div class="slot-icon">📍</div>
+    <div class="slot-window">
+      <div class="slot-reel" id="reel-2"></div>
+    </div>
+  </div>
+</div>
+
+<div class="label-row">
+  <span class="slot-label" id="hint-text">スタートを押してミッションを決めよう！</span>
+</div>
+
+<!-- ボタン -->
+<div class="btn-area">
+  <button class="btn-main" id="main-btn">スタート！</button>
+  <button class="btn-reset" id="reset-btn">リセットする</button>
+</div>
+
+<div class="confetti-container" id="confetti"></div>
+
+<script>
+// ── パークデータ ──
+const parkData = {
+  sea: {
+    name: 'TOKYO DISNEY SEA.',
+    jp: '東京ディズニーシー',
+    color: '#00B4C8',
+    toggleLabel: 'ランドに切替',
+    data: [
+      ['退園するまでに','昼食の前に','夕方までに','パレードの前に','ショーの後に','閉園1時間前に','最初のアトラクション前に'],
+      ['みんなで','1人で','ペアで','グループ全員で','好きな人と2人で','ランダムに選んだ人と','リーダーを決めて'],
+      ['センター・オブ・ジ・アースに乗る','インディ・ジョーンズに乗る','ソアリンを体験する','トイ・ストーリーマニアで対決する','ポルトパラディーゾで写真を撮る','レストランでシーフードを食べる','ビッグバンドビートを観る','ミステリアスアイランドを探索する','お土産を3つ選ぶ','キャラクターと写真を撮る','マジックランプシアターを観る'],
+    ]
+  },
+  land: {
+    name: 'TOKYO DISNEYLAND.',
+    jp: '東京ディズニーランド',
+    color: '#E8732A',
+    toggleLabel: 'シーに切替',
+    data: [
+      ['退園するまでに','昼食の前に','夕方までに','パレードの前に','ショーの後に','閉園1時間前に','最初のアトラクション前に'],
+      ['みんなで','1人で','ペアで','グループ全員で','好きな人と2人で','ランダムに選んだ人と','リーダーを決めて'],
+      ['ビッグサンダーマウンテンに乗る','スペースマウンテンに乗る','ホーンテッドマンションを体験する','プーさんのハニーハントに乗る','イッツ・ア・スモールワールドを楽しむ','スター・ツアーズを体験する','エレクトリカルパレードを観る','ワールドバザールで写真を撮る','お土産を3つ選ぶ','キャラクターと写真を撮る','カリブの海賊に乗る'],
+    ]
+  }
+};
+
+let currentPark = 'sea';
+let data = parkData.sea.data;
+
+// ── 状態 ──
+let state = 'idle'; // idle | spinning | stopping-0 | stopping-1 | stopping-2 | done
+let spinIntervals = [null, null, null];
+let currentIndex = [0, 0, 0];
+let targetIndex  = [0, 0, 0];
+let stoppedCount = 0;
+const ITEM_H = 90;
+const SPIN_SPEED = 28; // ms per frame
+const ITEMS_PER_REEL = 40; // 仮想リール長さ
+
+// ── 初期化 ──
+// カードの高さの半分からアイテム高さの半分を引いたオフセットで中央揃え
+const CARD_H = 90;
+const OFFSET = (CARD_H - ITEM_H) / 2; // = 0 (同じ高さなので自然に中央)
+
+function buildReels() {
+  for (let r = 0; r < 3; r++) {
+    const reel = document.getElementById(`reel-${r}`);
+    reel.innerHTML = '';
+    for (let i = 0; i < ITEMS_PER_REEL; i++) {
+      const div = document.createElement('div');
+      div.className = 'slot-item';
+      div.dataset.index = i;
+      div.textContent = data[r][i % data[r].length];
+      reel.appendChild(div);
+    }
+    currentIndex[r] = 0;
+    // top = OFFSET - 0 * ITEM_H → アイテム0がカード中央に
+    reel.style.transform = `translateY(${OFFSET}px)`;
+    document.getElementById(`card-${r}`).className = 'slot-card';
+  }
+}
+
+function updateHint(text) {
+  document.getElementById('hint-text').textContent = text;
+}
+
+// ── スタート ──
+function startAll() {
+  state = 'spinning';
+  stoppedCount = 0;
+  document.getElementById('main-btn').textContent = 'ストップ！';
+  updateHint('ストップを押すと上から止まります');
+  document.getElementById('confetti').innerHTML = '';
+
+  for (let r = 0; r < 3; r++) {
+    targetIndex[r] = Math.floor(Math.random() * data[r].length);
+    document.getElementById(`card-${r}`).classList.add('spinning');
+    startSpin(r);
+  }
+}
+
+function startSpin(r) {
+  const reel = document.getElementById(`reel-${r}`);
+  let pos = currentIndex[r];
+
+  spinIntervals[r] = setInterval(() => {
+    pos++;
+    if (pos >= ITEMS_PER_REEL - 5) pos = 5;
+    currentIndex[r] = pos;
+    reel.style.transform = `translateY(${OFFSET - pos * ITEM_H}px)`;
+  }, SPIN_SPEED);
+}
+
+// ── ストップ（1つずつ） ──
+function stopOne() {
+  if (stoppedCount >= 3) return;
+  const r = stoppedCount;
+  clearInterval(spinIntervals[r]);
+
+  // ターゲットに合うインデックスを計算
+  const reel = document.getElementById(`reel-${r}`);
+  // 現在位置から一番近いtargetIndexを探す
+  const cur = currentIndex[r];
+  let best = cur - (cur % data[r].length) + targetIndex[r];
+  if (best < cur) best += data[r].length;
+  // アニメーションで滑らかに止める
+  reel.style.transition = `transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+  reel.style.transform = `translateY(${OFFSET - best * ITEM_H}px)`;
+  currentIndex[r] = best;
+
+  document.getElementById(`card-${r}`).classList.remove('spinning');
+  document.getElementById(`card-${r}`).classList.add('stopped');
+
+  // アクティブアイテムをハイライト
+  const items = reel.querySelectorAll('.slot-item');
+  items.forEach(el => el.classList.remove('active'));
+  if (items[best]) items[best].classList.add('active');
+
+  setTimeout(() => {
+    reel.style.transition = '';
+  }, 600);
+
+  stoppedCount++;
+
+  if (stoppedCount === 3) {
+    state = 'done';
+    document.getElementById('main-btn').disabled = true;
+    updateHint('ミッション決定！楽しんでね🎉');
+    setTimeout(launchConfetti, 400);
+  } else {
+    const remaining = 3 - stoppedCount;
+    updateHint(`あと ${remaining} つ止めよう！`);
+  }
+}
+
+// ── リセット ──
+function reset() {
+  for (let r = 0; r < 3; r++) {
+    clearInterval(spinIntervals[r]);
+  }
+  state = 'idle';
+  stoppedCount = 0;
+  const btn = document.getElementById('main-btn');
+  btn.textContent = 'スタート！';
+  btn.disabled = false;
+  updateHint('スタートを押してミッションを決めよう！');
+  document.getElementById('confetti').innerHTML = '';
+  buildReels();
+}
+
+// ── ボタンハンドラ ──
+document.getElementById('main-btn').addEventListener('click', () => {
+  if (state === 'idle') {
+    startAll();
+  } else if (state === 'spinning') {
+    stopOne();
+  }
+});
+
+document.getElementById('reset-btn').addEventListener('click', reset);
+
+// ── パーク切替 ──
+document.getElementById('toggle-park-btn').addEventListener('click', () => {
+  if (state !== 'idle') reset();
+  currentPark = currentPark === 'sea' ? 'land' : 'sea';
+  const park = parkData[currentPark];
+  data = park.data;
+
+  const logo = document.getElementById('header-logo');
+  logo.className = `header-logo ${currentPark}`;
+  logo.style.background = park.color;
+  document.getElementById('logo-name').textContent = park.name;
+  document.getElementById('logo-jp').textContent = park.jp;
+  document.getElementById('toggle-park-btn').textContent = park.toggleLabel;
+  buildReels();
+});
+
+// ── 紙吹雪 ──
+function launchConfetti() {
+  const container = document.getElementById('confetti');
+  const colors = ['#F5A623','#00B4C8','#FF6B6B','#7BC67E','#FFD700','#FF8CC8'];
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.width  = (8 + Math.random() * 8) + 'px';
+    el.style.height = (10 + Math.random() * 10) + 'px';
+    el.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    el.style.animationDelay    = (Math.random() * 0.8) + 's';
+    container.appendChild(el);
+  }
+}
+
+// ── 起動 ──
+buildReels();
+</script>
+</body>
+</html>
